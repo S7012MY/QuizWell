@@ -1,0 +1,1 @@
+PGDATABASE=quizwell carton exec -- morbo script/quiz_well -l http://127.0.0.1:8086

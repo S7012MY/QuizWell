@@ -14,7 +14,7 @@ sub startup ($self) {
   my $r = $self->routes;
 
   # Normal route to controller
-  $r->get('/')->to('Example#welcome');
+  $r->get('/api')->to('Example#welcome');
 }
 
 1;
