@@ -581,6 +581,18 @@ DISTRIBUTIONS
       Sub::Quote 0
       Try::Tiny 0.04
       perl 5.008001
+  String-Random-0.32
+    pathname: S/SH/SHLOMIF/String-Random-0.32.tar.gz
+    provides:
+      String::Random 0.32
+    requirements:
+      Carp 0
+      Exporter 0
+      Module::Build 0.28
+      parent 0
+      perl 5.006_001
+      strict 0
+      warnings 0
   Sub-Quote-2.006008
     pathname: H/HA/HAARG/Sub-Quote-2.006008.tar.gz
     provides:

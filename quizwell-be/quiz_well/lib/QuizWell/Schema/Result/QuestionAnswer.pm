@@ -3,6 +3,7 @@ use base qw/DBIx::Class::Core/;
 
 __PACKAGE__->table('question_answers');
 
+# Possible answers to a question
 __PACKAGE__->add_columns(
   id => {
     data_type => 'integer',
@@ -10,11 +11,6 @@ __PACKAGE__->add_columns(
   },
 
   question_id => {
-    data_type => 'integer',
-    is_nullable => 0
-  },
-
-  answer_id => {
     data_type => 'integer',
     is_nullable => 0
   },
@@ -38,7 +34,7 @@ __PACKAGE__->add_columns(
 __PACKAGE__->set_primary_key('id');
 __PACKAGE__->belongs_to('question', 'QuizWell::Schema::Result::Question', 
   'question_id');
-__PACKAGE__->belongs_to('quiz_answers', 'QuizWell::Schema::Result::QuizAnswer',
+__PACKAGE__->has_many('quiz_answers', 'QuizWell::Schema::Result::QuizAnswer',
   'answer_id');
 
 1;
