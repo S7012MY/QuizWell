@@ -1,12 +1,15 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
-import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
+import App from './App';
+import ShowQuiz from './routes/quiz/Show';
+
 const router = createBrowserRouter([
   { path: '/', element: <App /> },
+  { path: '/quiz/:uuid', element: <ShowQuiz />},
   { path: '/test', element: <div>Test</div> },
 ]);
 

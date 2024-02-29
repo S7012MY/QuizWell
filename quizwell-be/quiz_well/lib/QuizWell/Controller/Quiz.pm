@@ -6,6 +6,46 @@ use Mojo::Message::Request;
 use Try::Tiny;
 
 use QuizWell::Helper::Utils;
+use QuizWell::Helper::Validator::Utils;
+
+sub answer($self) {
+  my $quiz_uuid = $self->param('uuid');
+
+  return unless my $quiz = 
+    validate_exists_in_resultset($self, 'Quiz', $quiz_uuid, 'uuid');
+  return $self->render(json => {error => 'Quiz not in progress'}) 
+    unless $quiz->current_question;
+  
+  # TODO: Add validation that answers are submitted to the correct question
+
+  my $current_question = $quiz->current_question;
+  my $quiz_current_question = $quiz->quiz_questions
+    ->find({ quiz_id => $quiz->id, question_id => $current_question->id });
+  my @answer_ids = $self->req->json->{answerIds}->@*;
+  my $next_question = $quiz_current_question->next_sibling;
+
+  try {
+    $self->db->txn_do(sub {
+      for my $answer_id (@answer_ids) {
+        $self->db->resultset('QuizAnswer')->create({
+          quiz_id => $quiz->id,
+          question_id => $current_question->id,
+          answer_id => $answer_id
+        });
+      }
+      
+      $quiz->update({current_question => $next_question->id })
+        if $next_question;
+      
+      $quiz->update({current_question => undef})
+        unless $next_question;
+    });
+  } catch {
+    say "Failed to answer quiz: $_";
+    return $self->render(json => {status => 'error', message => 'Failed to answer quiz'});
+  };
+  return $self->render(json => {status => 'ok', hasNextQuestion => $next_question ? 1 : 0});
+}
 
 sub generate($self) {
   my $job_description = $self->req->json->{jobDescription};
@@ -15,13 +55,13 @@ The job description is as follows:
 $job_description
 
 Generate a quiz with 10 multiple choice questions together with the correct 
-answer/answers. Prioritize coding questions whenever possible.
+answer/answers. Prioritize on choosing questions involving programming or snippets of code whenever possible.
 
 The response should be in json in the following format:
 questions: [
   {
-    question text formatted in markdown,
-    answers: array of possible answers,
+    question text formatted using html,
+    answers: array of possible answers each answer formatted as html,
     correctAnswers: array of numbers representing the correct answer/answers. Assume the possible answers are numbered starting from 0,
     tags: array of tags
   },
@@ -88,7 +128,65 @@ END_PROMPT
     return $self->render(json => {status => 'error', message => 'Failed to create quiz'});
   };
       
+  return $self->render(json => {uuid => $quiz_uuid});
+}
+
+sub question($self) {
+  my $quiz_uuid = $self->param('uuid');
+  return unless my $quiz = 
+    validate_exists_in_resultset($self, 'Quiz', $quiz_uuid, 'uuid');
+  return $self->render(json => {error => 'Quiz not in progress'}) 
+    unless $quiz->current_question;
+
+  my $current_question = $quiz->current_question;
+  my @answers = $current_question->answers->all;
+  my $question_data = {
+    question => $current_question->md,
+    answers => [map { {id => $_->id, md => $_->md} } @answers],
+  };
+  return $self->render(json => $question_data);
+
+}
+
+sub result($self) {
+  my $quiz_uuid = $self->param('uuid');
+  return unless my $quiz = 
+    validate_exists_in_resultset($self, 'Quiz', $quiz_uuid, 'uuid');
+  return $self->render(json => {error => 'Quiz not completed'}) 
+    if $quiz->current_question || $quiz->quiz_answers->count == 0;
+
+  my @quiz_questions = $quiz->quiz_questions->all;
+  my @question_answers = map { 
+    {
+      text => $_->question->md,
+      answers => [map { {id => $_->id, md => $_->md, is_correct => $_->is_correct} } $_->question->answers->all],
+      user_answers => [map { $_->answer_id } $quiz->quiz_answers->search({ question_id => $_->question->id})->all]
+    }
+
+  } @quiz_questions;
+
+  return $self->render(json => {questions => \@question_answers});
+}
+
+sub start($self) {
+  my $quiz_uuid = $self->param('uuid');
+  return unless my $quiz = 
+    validate_exists_in_resultset($self, 'Quiz', $quiz_uuid, 'uuid');
+  my $first_question = $quiz->quiz_questions
+    ->search({}, {order_by => 'position'})->first;
+  $quiz->update({current_question => $first_question->id });
   return $self->render(json => {status => 'ok'});
+}
+
+sub status($self) {
+  my $quiz_uuid = $self->param('uuid');
+  return unless my $quiz = 
+    validate_exists_in_resultset($self, 'Quiz', $quiz_uuid, 'uuid');
+  return $self->render(json => {status => 'NOT_STARTED'}) 
+    if !$quiz->current_question && $quiz->quiz_answers->count == 0;
+  return $self->render(json => {status => 'COMPLETED'}) 
+    if !$quiz->current_question && $quiz->quiz_answers;
+  return $self->render(json => {status => 'IN_PROGRESS'});
 }
 
 1;

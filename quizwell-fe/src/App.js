@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './App.css';
 
 // import bootstrap
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 function App() {
+  const navigate = useNavigate();
   const [jobDescription, setJobDescription] = useState('');
 
   function generateQuiz() {
@@ -13,7 +15,9 @@ function App() {
       body: JSON.stringify({ jobDescription: jobDescription }) }
     ).then(response => response.json())
     .then(data => {
-      console.log(data);
+      if (!data.error) {
+        navigate(`/quiz/${data.uuid}`);
+      }
     });
   }
 
