@@ -39,11 +39,22 @@ export default function ShowQuestion({ idx, nextQuestion, quizUuid }) {
       });
   }
 
+  function formatCodeInHtml(text) {
+    // Replace <br> with \n
+    text = text.replace(/<br>/g, '\n');
+    // Replace <code> with <pre> and </code> with </pre>
+    text = text.replace(/<code>/g, '<pre>').replace(/<\/code>/g, '</pre>');
+    // Replace < with &lt; inside <pre>
+    text = text.replace(/<pre>(.*?)<\/pre>/gs, (match, p1) => `<pre>${p1.replace(/</g, '&lt;')}</pre>`);
+    // 
+    return text;
+  }
+
   return (
     <div>
       {question && 
         <div>
-          <div dangerouslySetInnerHTML={{ __html: question }}></div>
+          <div dangerouslySetInnerHTML={{ __html: formatCodeInHtml(question) }}></div>
           <div className="form-check">
             {answers.map((answer) => (
               <div key={answer.id} className="form-check">
@@ -62,7 +73,7 @@ export default function ShowQuestion({ idx, nextQuestion, quizUuid }) {
                   }}
                 />
                 <label className="form-check-label" htmlFor={answer.id}>
-                  <div dangerouslySetInnerHTML={{ __html: answer.md }}></div>
+                  <div dangerouslySetInnerHTML={{ __html: formatCodeInHtml(answer.md) }}></div>
                 </label>
               </div>
             ))}

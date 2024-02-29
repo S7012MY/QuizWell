@@ -50,47 +50,62 @@ sub answer($self) {
 sub generate($self) {
   my $job_description = $self->req->json->{jobDescription};
   my $chatgpt_prompt = <<END_PROMPT;
-I am preparing for an interview which will consist of multiple choice questions.
-The job description is as follows:
-$job_description
+I have a job description for a software engineer role. 
+Please extract only the technologies, frameworks and programming languages from the job description.
+Use them to generate a multiple choice quiz having 10 questions involving those extracted technologies.
+Generated questions should only involve technologies, frameworks and programming languages mentioned in the job descriptions.
+Generated questions should not be about the job description itself.
+The level of difficulty should be senior level.
+75% of the questions should be practical and involve complex code snippets, each snippet having at least 10 lines of code.
 
-Generate a quiz with 10 multiple choice questions together with the correct 
-answer/answers. Prioritize on choosing questions involving programming or snippets of code whenever possible.
-
-The response should be in json in the following format:
+The response should be encoded using json in the following format. It shouldn't contain any other information apart from the quiz questions and answers.
+{
 questions: [
   {
-    question text formatted using html,
+    question: question text formatted using html,
     answers: array of possible answers each answer formatted as html,
     correctAnswers: array of numbers representing the correct answer/answers. Assume the possible answers are numbered starting from 0,
     tags: array of tags
   },
   ...
-]
+],
+error: in case an error happens, this field should be present and contain the error message,
+warning: in case there is a warning, this field should be present and contain the warning message
+}
+
+
+Below is the job description:
+$job_description
 END_PROMPT
-
-  # Calling the GPT API
-  my $gpt_response = $self->ua->post('https://api.openai.com/v1/chat/completions',
-    {Authorization
-      => 'Bearer ' . $self->app->config->{openai_key},
-      'Content-Type' => 'application/json'},
-    json => {
-      model => 'gpt-3.5-turbo',
-      messages => [
-        {role => 'user', content => $chatgpt_prompt}
-      ]
-    }
-  )->result;
-  my $actual_response = decode_json 
-    $gpt_response->json->{choices}[0]{message}{content};
-  
-  my $quiz_uuid = generate_uuid($self->db->resultset('Quiz'), 'uuid');
-
+  my $quiz_uuid;
   try {
+    # Calling the GPT API
+    $self->ua->inactivity_timeout(300);
+    my $gpt_response = $self->ua->post('https://api.openai.com/v1/chat/completions',
+      {Authorization
+        => 'Bearer ' . $self->app->config->{openai_key},
+        'Content-Type' => 'application/json'},
+      json => {
+        model => 'gpt-4',
+        messages => [
+          {role => 'user', content => $chatgpt_prompt}
+        ]
+      }
+    )->result;
+    use Data::Dumper;
+    say Dumper($gpt_response->json);
+    my $actual_response = decode_json $gpt_response->json->{choices}[0]{message}{content};
+    
+    $quiz_uuid = generate_uuid($self->db->resultset('Quiz'), 'uuid');
+
     $self->db->txn_do(sub {
-      my $quiz = $self->db->resultset('Quiz')->create({uuid => $quiz_uuid});
+      my $quiz = $self->db->resultset('Quiz')->create({
+        uuid => $quiz_uuid,
+        prompt => $chatgpt_prompt
+      });
       my $question_position = 0;
       for my $question ($actual_response->{questions}->@*) {
+        say Dumper($question);
         my $question_text = $question->{question};
         my $question_record = $self->db->resultset('Question')->create({
           md => $question_text

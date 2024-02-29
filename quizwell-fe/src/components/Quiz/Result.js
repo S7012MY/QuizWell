@@ -35,8 +35,12 @@ export default function QuizResult({ quizUuid }) {
   }, [quizUuid]);
 
   return (
-    <div>
+    <div className="container">
       <h1>Quiz Result</h1>
+      <br />
+      <p>
+        Did you like the quiz? <a href="https://buy.stripe.com/28o3ftgQk55Ef9C296">Donate $1 here</a> to keep it running.
+      </p>
       <div className="card">
         <div className="card-header">Your results</div>
         <div className="card-body">
@@ -55,8 +59,8 @@ export default function QuizResult({ quizUuid }) {
               {question.answers.map((answer) => (
                 <div key={answer.id} className="list-group-item">
                   <div>{answer.md}</div>
-                  <div className="badge bg-primary">{answer.is_correct ? 'Correct' : 'Incorrect'}</div>
-                  <div className="badge bg-secondary">{question.user_answers.includes(answer.id) ? 'Selected' : 'Not Selected'}</div>
+                  { answer.is_correct === 1 && <div className="badge bg-primary">Correct</div> }
+                  { question.user_answers.includes(answer.id) && <div className="badge bg-secondary">Selected</div> }
                 </div>
               ))}
             </div>
