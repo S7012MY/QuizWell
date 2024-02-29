@@ -20,6 +20,10 @@ export default function ShowQuestion({ idx, nextQuestion, quizUuid }) {
   }, [idx]);
 
   function submitAnswer() {
+    if (selectedAnswers.length === 0) {
+      alert('Please select at least one answer');
+      return;
+    }
     fetch(`/api/quiz/${quizUuid}/answer`, {
       method: 'POST',
       headers: {

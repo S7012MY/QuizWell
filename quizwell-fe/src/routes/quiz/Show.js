@@ -16,6 +16,7 @@ export default function ShowQuiz() {
           console.log(data);
           setStatus(data.status);
         } else {
+          alert(data.error);
           console.error(data.error);
         }
       });

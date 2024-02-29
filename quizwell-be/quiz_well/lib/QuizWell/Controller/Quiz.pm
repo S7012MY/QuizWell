@@ -2,6 +2,7 @@ package QuizWell::Controller::Quiz;
 use Mojo::Base 'Mojolicious::Controller', -signatures;
 
 use Mojo::JSON qw(decode_json);
+use Mojo::Log;
 use Mojo::Message::Request;
 use Try::Tiny;
 
@@ -78,6 +79,7 @@ Below is the job description:
 $job_description
 END_PROMPT
   my $quiz_uuid;
+  my $had_error = 0;
   try {
     # Calling the GPT API
     $self->ua->inactivity_timeout(300);
@@ -95,6 +97,9 @@ END_PROMPT
     use Data::Dumper;
     say Dumper($gpt_response->json);
     my $actual_response = decode_json $gpt_response->json->{choices}[0]{message}{content};
+    if ($actual_response->{error}) {
+      die $actual_response->{error};
+    }
     
     $quiz_uuid = generate_uuid($self->db->resultset('Quiz'), 'uuid');
 
@@ -139,11 +144,15 @@ END_PROMPT
       }
     });
   } catch {
+    # Log the error
+    my $log = Mojo::Log->new(path => '/var/log/quizwell.log');
+    $log->error("Failed to generate quiz: $_");
     say "Failed to create quiz: $_";
-    return $self->render(json => {status => 'error', message => 'Failed to create quiz'});
+    $had_error = 1;
+    return $self->render(json => {error => "Failed to generate quiz: $_"});
   };
       
-  return $self->render(json => {uuid => $quiz_uuid});
+  $self->render(json => {uuid => $quiz_uuid}) unless $had_error;
 }
 
 sub question($self) {

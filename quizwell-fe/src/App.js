@@ -22,7 +22,9 @@ function App() {
       } else {
         console.error(data.error);
         alert("Generating quiz failed. Try again with a slightly different " 
-          + "job description")
+          + "job description");
+        alert(data.error);
+        setIsGenerating(false);
       }
     });
   }
