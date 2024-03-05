@@ -1,5 +1,6 @@
 requires 'IO::Socket::SSL';
 requires 'Mojolicious';
 requires 'DBD::Pg';
+requires 'DBIx::Class::Schema';
 requires 'SQL::Translator';
 requires 'String::Random';

@@ -4,6 +4,7 @@ export default function ShowQuestion({ idx, nextQuestion, quizUuid }) {
   const [question, setQuestion] = useState('');
   const [answers, setAnswers] = useState([]);
   const [selectedAnswers, setSelectedAnswers] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     fetch(`/api/quiz/${quizUuid}/question`)
@@ -24,6 +25,7 @@ export default function ShowQuestion({ idx, nextQuestion, quizUuid }) {
       alert('Please select at least one answer');
       return;
     }
+    setIsSubmitting(true);
     fetch(`/api/quiz/${quizUuid}/answer`, {
       method: 'POST',
       headers: {
@@ -40,6 +42,12 @@ export default function ShowQuestion({ idx, nextQuestion, quizUuid }) {
         } else {
           console.error(data.error);
         }
+      })
+      .catch(error => {
+        console.error(error);
+      })
+      .finally(() => {
+        setIsSubmitting(false); 
       });
   }
 
@@ -55,11 +63,11 @@ export default function ShowQuestion({ idx, nextQuestion, quizUuid }) {
   }
 
   return (
-    <div>
+    <div className="d-flex align-items-center justify-content-center">
       {question && 
-        <div>
-          <div dangerouslySetInnerHTML={{ __html: formatCodeInHtml(question) }}></div>
-          <div className="form-check">
+        <div className="card" style={{minwidth: 20 + 'rem'}}>
+          <div dangerouslySetInnerHTML={{ __html: formatCodeInHtml(question) }} className="card-header" style={{ fontWeight: 'bold' }}></div>
+          <div className="card-body">
             {answers.map((answer) => (
               <div key={answer.id} className="form-check">
                 { /* TODO fix uncontrolled component */ }
@@ -82,9 +90,9 @@ export default function ShowQuestion({ idx, nextQuestion, quizUuid }) {
               </div>
             ))}
           </div>
-          <button className="btn btn-primary" onClick={submitAnswer}>
+          {!isSubmitting && <button className="btn btn-primary mx-auto mb-4" onClick={submitAnswer}>
             Submit Answer
-          </button>
+          </button>}
         </div>
       }
     </div>
