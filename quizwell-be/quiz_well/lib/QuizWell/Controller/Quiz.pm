@@ -19,6 +19,8 @@ sub answer($self) {
   
   # TODO: Add validation that answers are submitted to the correct question
 
+  say $quiz->id;
+  say $quiz->current_question->id;
   my $current_question = $quiz->current_question;
   my $quiz_current_question = $quiz->quiz_questions
     ->find({ quiz_id => $quiz->id, question_id => $current_question->id });
@@ -50,33 +52,55 @@ sub answer($self) {
 
 sub generate($self) {
   my $job_description = $self->req->json->{jobDescription};
-  my $chatgpt_prompt = <<END_PROMPT;
-I have a job description for a software engineer role. 
-Please extract only the technologies, frameworks and programming languages from the job description.
+  # TODO Move this to a validation module
+  return $self->render(json => {error => 'Job description too long'}) 
+    if length($job_description) > 3000;
+  my $system_prompt = <<END_PROMPT;
+You are an expert software engineer with special knowledge in interviewing and recruiting software engineers.
+You want to hire a senior software engineer based on a job description that you will receive as input from the user.
+
+First of all you extract only the technologies, frameworks and programming languages from the job description because you only focus on the technical aspects.
+Rate each of the extracted technologies, frameworks and programming languages based on how important they are for the job you're hiring right now.
 Use them to generate a multiple choice quiz having 10 questions involving those extracted technologies.
 Generated questions should only involve technologies, frameworks and programming languages mentioned in the job descriptions.
 Generated questions should not be about the job description itself.
 The level of difficulty should be senior level.
 75% of the questions should be practical and involve complex code snippets, each snippet having at least 10 lines of code.
 
-The response should be encoded using json in the following format. It shouldn't contain any other information apart from the quiz questions and answers.
+The response should be encoded using valid JSON in the following format. It shouldn't contain any other information apart from the quiz questions and answers.
 {
-questions: [
-  {
-    question: question text formatted using html,
-    answers: array of possible answers each answer formatted as html,
-    correctAnswers: array of numbers representing the correct answer/answers. Assume the possible answers are numbered starting from 0,
-    tags: array of tags
-  },
-  ...
-],
-error: in case an error happens, this field should be present and contain the error message,
-warning: in case there is a warning, this field should be present and contain the warning message
+  questions: [
+    {
+      question: string, //question text formatted using html (be careful to escape double quotes for this field),
+      answers: [string], // array of possible answers each answer formatted as html (be careful to escape double quotes in the elements of this array),
+      explanation: string, //explanation of the correct answer(s) formatted as html (be careful to escape double quotes for this field),
+      correctAnswers: [int], // array of numbers representing the correct answer/answers. Assume the possible answers are numbered starting from 0,
+      tags: [string], // array of tags
+    }, // array of 10 question objects
+  ],
+  error: string, // in case an error happens, this field should be present and contain the error message,
+  warning: string //in case there is a warning, this field should be present and contain the warning message
 }
 
+Example question if the job description is for a Python position:
+{
+  "tags": [
+    "Python",
+    "Functional Programming"
+  ],
+  "answers": [
+    "[1, 2, 3, 4, 5, 1, 2, 3, 4, 5]",
+    "[2, 4, 6, 8, 10]",
+    "[1, 2, 3, 4, 5, 2, 4, 6, 8, 10]",
+    "None of the above"
+  ],
+  "question": "What is the output of the following Python code snippet? <br />nums = [1, 2, 3, 4, 5] <br />nums = list(map(lambda x: x*2, nums)) <br />print(nums)",
+  "explanation": "The map function applies the lambda function to each element of the 'nums' list, therefore outputting: [2, 4, 6, 8, 10].",
+  "correctAnswers": [
+    1
+  ]
+}
 
-Below is the job description:
-$job_description
 END_PROMPT
   my $quiz_uuid;
   my $had_error = 0;
@@ -90,7 +114,8 @@ END_PROMPT
       json => {
         model => 'gpt-4',
         messages => [
-          {role => 'user', content => $chatgpt_prompt}
+          {role => 'system', content => $system_prompt},
+          {role => 'user', content => $job_description}
         ]
       }
     )->result;
@@ -106,15 +131,19 @@ END_PROMPT
     $self->db->txn_do(sub {
       my $quiz = $self->db->resultset('Quiz')->create({
         uuid => $quiz_uuid,
-        prompt => $chatgpt_prompt
+        prompt => $system_prompt . "\n\n\n\n----$job_description",
       });
-      my $question_position = 0;
+      my $question_position = 1;
       for my $question ($actual_response->{questions}->@*) {
         say Dumper($question);
         my $question_text = $question->{question};
-        my $question_record = $self->db->resultset('Question')->create({
+        my $question_record = $self->db->resultset('Question')->find({
           md => $question_text
         });
+        $question_record = $self->db->resultset('Question')->create({
+          md => $question_text
+        }) unless $question_record;
+
         $self->db->resultset('QuizQuestion')->create({
           quiz_id => $quiz->id,
           question_id => $question_record->id,

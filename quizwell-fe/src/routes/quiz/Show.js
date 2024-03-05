@@ -8,8 +8,28 @@ export default function ShowQuiz() {
   const [status, setStatus] = useState('LOADING');
   const [questionIdx, setQuestionIdx] = useState(-1);
 
+  function fetchWithTimeout(url, options, timeout = 70000) {
+    const controller = new AbortController();
+    const signal = controller.signal;
+  
+    options = {...options, signal };
+  
+    const timeoutPromise = new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        clearTimeout(timer);
+        controller.abort();
+        reject(new Error('Request timed out'));
+      }, timeout);
+    });
+  
+    return Promise.race([
+      fetch(url, options),
+      timeoutPromise,
+    ]);
+  }
+
   useEffect(() => {
-    fetch(`/api/quiz/${quizUuid}/status`)
+    fetchWithTimeout(`/api/quiz/${quizUuid}/status`, {}, 120000)
       .then(response => response.json())
       .then(data => {
         if (!data.error) {

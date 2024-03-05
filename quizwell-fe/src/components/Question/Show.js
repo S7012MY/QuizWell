@@ -4,6 +4,7 @@ export default function ShowQuestion({ idx, nextQuestion, quizUuid }) {
   const [question, setQuestion] = useState('');
   const [answers, setAnswers] = useState([]);
   const [selectedAnswers, setSelectedAnswers] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     fetch(`/api/quiz/${quizUuid}/question`)
@@ -24,6 +25,7 @@ export default function ShowQuestion({ idx, nextQuestion, quizUuid }) {
       alert('Please select at least one answer');
       return;
     }
+    setIsSubmitting(true);
     fetch(`/api/quiz/${quizUuid}/answer`, {
       method: 'POST',
       headers: {
@@ -82,9 +84,9 @@ export default function ShowQuestion({ idx, nextQuestion, quizUuid }) {
               </div>
             ))}
           </div>
-          <button className="btn btn-primary" onClick={submitAnswer}>
+          {!isSubmitting && <button className="btn btn-primary" onClick={submitAnswer}>
             Submit Answer
-          </button>
+          </button>}
         </div>
       }
     </div>
