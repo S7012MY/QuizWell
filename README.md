@@ -18,7 +18,7 @@ Welcome to the installation guide for the backend and frontend parts of Quizwell
 
 ## Description
 
-As part of the WellCode Mentorship program, candidates are often required to undergo technical interviews where they are tested on their programming knowledge and problem-solving skills. This application aims to streamline the interview preparation process by providing candidates with tailored practice questions and constructive feedback.
+Designed to assist job seekers in preparing for interviews, this application offers various tests tailored to different job positions. By inputting the desired position, candidates can access relevant practice questions, streamlining their preparation process and increasing their chances of success during interviews.
 
 
 ### Features:
@@ -39,8 +39,8 @@ As part of the WellCode Mentorship program, candidates are often required to und
 Before proceeding with the installation, ensure that you have the following prerequisites installed on your system:
 
 Perl 5.38.2
-Perlbrew → https://perlbrew.pl
-`cpanm Carton`
+Perlbrew --> https://perlbrew.pl --> macOS system
+Strawberry Perl --> Windows system
 
 #### Installation Steps
 
@@ -50,9 +50,9 @@ Perlbrew → https://perlbrew.pl
 2. Navigate to the Backend Directory: Change your current directory to the backend folder:
     `cd quizwell-be/quiz_well`
 
-3. Install Dependencies: Install the required Perl dependencies using CPAN or any other package manager:
-    install Homebrew
-    `brew install carton`
+3. Install Dependencies: Install the required Perl dependencies using CPANM:
+    install Homebrew --> macOS system
+    `cpanm Carton`
     `carton install`
 
 4. Connect to the database:
@@ -70,7 +70,8 @@ Perlbrew → https://perlbrew.pl
         `\q`
 
 5. Start the backend application:
-    `...`
+    Being located in the 'script' folder run this command:
+    `carton exec -- perl quiz_well daemon -l http://127.0.0.1:8086`
 
 
 ### Frontend Installation
@@ -96,7 +97,7 @@ Guidelines for contributing to the project. Include information on how to report
 ### Pull Request Process
 
 1. Fork the repository
-2. Create a new branch (`git checkout -b feature/new-feature`)
+2. Create a new branch (`git checkout -b yourInitials/new-feature`)
 3. Make your changes and commit them (`git commit -am 'Add new feature'`)
 4. Push your changes to the branch (`git push origin feature/new-feature`)
 5. Open a pull request.
@@ -104,7 +105,7 @@ Guidelines for contributing to the project. Include information on how to report
 
 
 ## License 
-This project is lincensed under the ... 
+This project is lincensed under the Copyright WellCode 2024.
 
 
 
