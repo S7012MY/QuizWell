@@ -42,6 +42,12 @@ export default function ShowQuestion({ idx, nextQuestion, quizUuid }) {
         } else {
           console.error(data.error);
         }
+      })
+      .catch(error => {
+        console.error(error);
+      })
+      .finally(() => {
+        setIsSubmitting(false); 
       });
   }
 
