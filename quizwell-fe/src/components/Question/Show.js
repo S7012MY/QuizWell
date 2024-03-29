@@ -63,11 +63,11 @@ export default function ShowQuestion({ idx, nextQuestion, quizUuid }) {
   }
 
   return (
-    <div>
+    <div className="d-flex align-items-center justify-content-center">
       {question && 
-        <div>
-          <div dangerouslySetInnerHTML={{ __html: formatCodeInHtml(question) }}></div>
-          <div className="form-check">
+        <div className="card">
+          <div dangerouslySetInnerHTML={{ __html: formatCodeInHtml(question) }} className="card-header"></div>
+          <div className="card-body">
             {answers.map((answer) => (
               <div key={answer.id} className="form-check">
                 { /* TODO fix uncontrolled component */ }
@@ -90,7 +90,7 @@ export default function ShowQuestion({ idx, nextQuestion, quizUuid }) {
               </div>
             ))}
           </div>
-          {!isSubmitting && <button className="btn btn-primary" onClick={submitAnswer}>
+          {!isSubmitting && <button className="btn btn-primary mx-auto mb-4" onClick={submitAnswer}>
             Submit Answer
           </button>}
         </div>
