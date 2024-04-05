@@ -18,7 +18,7 @@ export default function ShowQuestion({ idx, nextQuestion, quizUuid }) {
           console.error(data.error);
         }
       });
-  }, [idx]);
+  }, [idx, quizUuid]);
 
   function submitAnswer() {
     if (selectedAnswers.length === 0) {

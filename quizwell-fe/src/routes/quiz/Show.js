@@ -30,7 +30,12 @@ export default function ShowQuiz() {
 
   useEffect(() => {
     fetchWithTimeout(`/api/quiz/${quizUuid}/status`, {}, 120000)
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
       .then(data => {
         if (!data.error) {
           console.log(data);
@@ -39,6 +44,10 @@ export default function ShowQuiz() {
           alert(data.error);
           console.error(data.error);
         }
+      })
+      .catch(error => {
+        alert('Failed to fetch quiz status: ' + error.message);
+        console.error('Failed to fetch quiz status:', error);
       });
   }, [quizUuid]);
 
@@ -51,7 +60,12 @@ export default function ShowQuiz() {
 
   function startQuiz() {
     fetch(`/api/quiz/${quizUuid}/start`, { method: 'POST' })
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
       .then(data => {
         if (!data.error) {
           console.log(data);
@@ -60,6 +74,9 @@ export default function ShowQuiz() {
         } else {
           console.error(data.error);
         }
+      })
+      .catch(error => {
+        console.error('Failed to start quiz:', error);
       });
   }
 
