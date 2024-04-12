@@ -1,6 +1,8 @@
 package QuizWell::Controller::Quiz;
 use Mojo::Base 'Mojolicious::Controller', -signatures;
 
+use utf8;
+
 use Mojo::JSON qw(decode_json);
 use Mojo::Log;
 use Mojo::Message::Request;
@@ -66,6 +68,9 @@ Generated questions should only involve technologies, frameworks and programming
 Generated questions should not be about the job description itself.
 The level of difficulty should be senior level.
 75% of the questions should be practical and involve complex code snippets, each snippet having at least 10 lines of code.
+
+Ensure that the quiz contains a total of 10 questions.
+If the extracted information does not result in 10 questions, generate additional questions based on the available data.
 
 The response should be encoded using valid JSON in the following format. It shouldn't contain any other information apart from the quiz questions and answers.
 {
