@@ -3,3 +3,5 @@ requires 'Mojolicious';
 requires 'DBD::Pg';
 requires 'SQL::Translator';
 requires 'String::Random';
+requires 'DateTime';
+requires 'DateTime::Format::Pg';
