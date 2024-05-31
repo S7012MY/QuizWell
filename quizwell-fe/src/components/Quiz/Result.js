@@ -38,7 +38,6 @@ export default function QuizResult({ quizUuid }) {
       .then(data => {
         if (!data.error) {
           setDuration(data.duration);
-          console.log('Duration data: ', data.duration);
         } else {
           console.error(data.error);
         }

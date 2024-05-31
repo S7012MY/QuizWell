@@ -1,7 +1,7 @@
-requires 'IO::Socket::SSL';
-requires 'Mojolicious';
-requires 'DBD::Pg';
-requires 'SQL::Translator';
-requires 'String::Random';
 requires 'DateTime';
 requires 'DateTime::Format::Pg';
+requires 'DBD::Pg';
+requires 'IO::Socket::SSL';
+requires 'Mojolicious';
+requires 'SQL::Translator';
+requires 'String::Random';
