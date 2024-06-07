@@ -9,6 +9,9 @@ use Try::Tiny;
 use QuizWell::Helper::Utils;
 use QuizWell::Helper::Validator::Utils;
 
+use DateTime;
+use DateTime::Format::Pg;
+
 sub answer($self) {
   my $quiz_uuid = $self->param('uuid');
 
@@ -227,19 +230,37 @@ sub start($self) {
     validate_exists_in_resultset($self, 'Quiz', $quiz_uuid, 'uuid');
   my $first_question = $quiz->quiz_questions
     ->search({}, {order_by => 'position'})->first;
+  
+  # Start quiz timer
+    $quiz->update({quiz_start_time => DateTime->now()});
+  
   $quiz->update({current_question => $first_question->id });
   return $self->render(json => {status => 'ok'});
 }
 
-sub status($self) {
+sub status {
+  my ($self) = @_;
   my $quiz_uuid = $self->param('uuid');
   return unless my $quiz = 
     validate_exists_in_resultset($self, 'Quiz', $quiz_uuid, 'uuid');
-  return $self->render(json => {status => 'NOT_STARTED'}) 
-    if !$quiz->current_question && $quiz->quiz_answers->count == 0;
-  return $self->render(json => {status => 'COMPLETED'}) 
-    if !$quiz->current_question && $quiz->quiz_answers;
-  return $self->render(json => {status => 'IN_PROGRESS'});
+  my ($status, $duration);
+  if (!$quiz->current_question && $quiz->quiz_answers->count == 0) {
+    $status = 'NOT_STARTED';
+  } elsif (!$quiz->current_question && $quiz->quiz_answers) {
+
+    # Stop quiz timer and calculate duration
+    $quiz->update({quiz_end_time => DateTime->now()});
+    my $start_time = DateTime::Format::Pg->parse_datetime($quiz->quiz_start_time);
+    my $end_time = DateTime::Format::Pg->parse_datetime($quiz->quiz_end_time);
+    my $duration_seconds = $end_time->subtract_datetime($start_time);
+    my ($hours, $minutes, $seconds) = $duration_seconds->in_units('hours', 'minutes', 'seconds');
+    $duration = sprintf("%02d:%02d:%02d", $hours, $minutes, $seconds);
+
+    $status = 'COMPLETED';
+  } else {
+    $status = 'IN_PROGRESS';
+  }
+  return $self->render(json => {status => $status, duration => $duration});
 }
 
 1;
