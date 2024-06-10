@@ -1,6 +1,8 @@
 package QuizWell::Controller::Quiz;
 use Mojo::Base 'Mojolicious::Controller', -signatures;
 
+use DateTime;
+use DateTime::Format::Pg;
 use Mojo::JSON qw(decode_json);
 use Mojo::Log;
 use Mojo::Message::Request;
@@ -212,13 +214,30 @@ sub result($self) {
   my @question_answers = map { 
     {
       text => $_->question->md,
-      answers => [map { {id => $_->id, md => $_->md, is_correct => $_->is_correct} } $_->question->answers->all],
-      user_answers => [map { $_->answer_id } $quiz->quiz_answers->search({ question_id => $_->question->id})->all]
+      answers => [
+        map { 
+          {id => $_->id, md => $_->md, is_correct => $_->is_correct} 
+        } $_->question->answers->all
+      ],
+      user_answers => [
+        map { 
+          $_->answer_id 
+        } $quiz->quiz_answers->search({ question_id => $_->question->id})->all
+      ]
     }
 
   } @quiz_questions;
+  
+  my $duration;
+  if ($quiz->quiz_end_time && $quiz->quiz_start_time) {
+    my $start_time = DateTime::Format::Pg->parse_datetime($quiz->quiz_start_time);
+    my $end_time = DateTime::Format::Pg->parse_datetime($quiz->quiz_end_time);
+    my $duration_seconds = $end_time->subtract_datetime($start_time);
+    my ($hours, $minutes, $seconds) = $duration_seconds->in_units('hours', 'minutes', 'seconds');
+    $duration = sprintf("%02d:%02d:%02d", $hours, $minutes, $seconds);
+  }
 
-  return $self->render(json => {questions => \@question_answers});
+  return $self->render(json => {questions => \@question_answers, duration => $duration});
 }
 
 sub start($self) {
@@ -227,6 +246,10 @@ sub start($self) {
     validate_exists_in_resultset($self, 'Quiz', $quiz_uuid, 'uuid');
   my $first_question = $quiz->quiz_questions
     ->search({}, {order_by => 'position'})->first;
+
+  # Start quiz timer
+  $quiz->update({quiz_start_time => DateTime->now()});
+
   $quiz->update({current_question => $first_question->id });
   return $self->render(json => {status => 'ok'});
 }
@@ -235,11 +258,19 @@ sub status($self) {
   my $quiz_uuid = $self->param('uuid');
   return unless my $quiz = 
     validate_exists_in_resultset($self, 'Quiz', $quiz_uuid, 'uuid');
-  return $self->render(json => {status => 'NOT_STARTED'}) 
-    if !$quiz->current_question && $quiz->quiz_answers->count == 0;
-  return $self->render(json => {status => 'COMPLETED'}) 
-    if !$quiz->current_question && $quiz->quiz_answers;
-  return $self->render(json => {status => 'IN_PROGRESS'});
+  my $status;
+  if (!$quiz->current_question && $quiz->quiz_answers->count == 0) {
+    $status = 'NOT_STARTED';
+  } elsif (!$quiz->current_question && $quiz->quiz_answers) {
+
+    # Stop quiz timer
+    $quiz->update({quiz_end_time => DateTime->now()});
+
+    $status = 'COMPLETED';
+  } else {
+    $status = 'IN_PROGRESS';
+  }
+  return $self->render(json => {status => $status});
 }
 
 1;
