@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 export default function QuizResult({ quizUuid }) {
   const [questionData, setQuestionData] = useState([]);
   const [correctAnswers, setCorrectAnswers] = useState(0);
+  const [duration, setDuration] = useState("");
 
   useEffect(() => {
     fetch(`/api/quiz/${quizUuid}/result`)
@@ -11,6 +12,7 @@ export default function QuizResult({ quizUuid }) {
         if (!data.error) {
           let correctAnswers = 0;
           setQuestionData(data.questions);
+          setDuration(data.duration);
           for (const question of data.questions) {
             let isCorrect = true;
             for (const answer of question.answers) {
@@ -31,6 +33,9 @@ export default function QuizResult({ quizUuid }) {
         } else {
           console.error(data.error);
         }
+      })
+      .catch(error => {
+        console.error('Error fetching quiz results:', error);
       });
   }, [quizUuid]);
 
@@ -47,6 +52,7 @@ export default function QuizResult({ quizUuid }) {
           <div>Correct answers: {correctAnswers}</div>
           <div>Total questions: {questionData.length}</div>
           <div>Percentage: {correctAnswers / questionData.length * 100}%</div>
+          <div>Quiz duration (HH:MM:SS): {duration}</div>
         </div>
       </div>
 

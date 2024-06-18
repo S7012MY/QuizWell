@@ -29,6 +29,17 @@ __PACKAGE__->add_columns(
   prompt => {
     data_type => 'text',
     is_nullable => 1
+  },
+
+  # Columns used for storing start and end time of each quiz
+  start_time => {
+    data_type => 'datetime',
+    is_nullable => 1,
+  },
+
+  end_time => {
+    data_type => 'datetime',
+    is_nullable => 1,
   }
 );
 
