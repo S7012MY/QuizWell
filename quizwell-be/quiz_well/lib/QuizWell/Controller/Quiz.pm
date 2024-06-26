@@ -229,9 +229,9 @@ sub result($self) {
   } @quiz_questions;
   
   my $duration;
-  if ($quiz->quiz_end_time && $quiz->quiz_start_time) {
-    my $start_time = DateTime::Format::Pg->parse_datetime($quiz->quiz_start_time);
-    my $end_time = DateTime::Format::Pg->parse_datetime($quiz->quiz_end_time);
+  if ($quiz->end_time && $quiz->start_time) {
+    my $start_time = DateTime::Format::Pg->parse_datetime($quiz->start_time);
+    my $end_time = DateTime::Format::Pg->parse_datetime($quiz->end_time);
     my $duration_seconds = $end_time->subtract_datetime($start_time);
     my ($hours, $minutes, $seconds) = $duration_seconds->in_units('hours', 'minutes', 'seconds');
     $duration = sprintf("%02d:%02d:%02d", $hours, $minutes, $seconds);
@@ -248,7 +248,7 @@ sub start($self) {
     ->search({}, {order_by => 'position'})->first;
 
   # Start quiz timer
-  $quiz->update({quiz_start_time => DateTime->now()});
+  $quiz->update({start_time => DateTime->now()});
 
   $quiz->update({current_question => $first_question->id });
   return $self->render(json => {status => 'ok'});
@@ -264,7 +264,7 @@ sub status($self) {
   } elsif (!$quiz->current_question && $quiz->quiz_answers) {
 
     # Stop quiz timer
-    $quiz->update({quiz_end_time => DateTime->now()});
+    $quiz->update({end_time => DateTime->now()});
 
     $status = 'COMPLETED';
   } else {
