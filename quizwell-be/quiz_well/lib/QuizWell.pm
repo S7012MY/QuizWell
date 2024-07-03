@@ -22,6 +22,7 @@ sub startup ($self) {
 
   # Quiz routes
   $r->post('/api/quiz/generate')->name('generate_quiz')->to('Quiz#generate');
+  $r->get('/api/quiz/list')->name('get_quiz_list')->to('Quiz#list');
   $r->get('/api/quiz/:uuid')->name('get_quiz')->to('Quiz#get');
   $r->post('/api/quiz/:uuid/answer')->name('answer_quiz')
     ->to('Quiz#answer');

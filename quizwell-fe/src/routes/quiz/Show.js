@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import ShowQuestion from "../../components/Question/Show";
 import QuizResult from "../../components/Quiz/Result";
+import { startQuiz as startQuizUtil } from "../../utils/quiz";
 
 export default function ShowQuiz() {
   const quizUuid = useParams().uuid;
@@ -49,16 +50,15 @@ export default function ShowQuiz() {
     }
   }
 
-  function startQuiz() {
-    fetch(`/api/quiz/${quizUuid}/start`, { method: 'POST' })
-      .then(response => response.json())
-      .then(data => {
-        if (!data.error) {
-          console.log(data);
-          setStatus('IN_PROGRESS');
+  function handleStartQuiz() {
+    startQuizUtil(quizUuid)
+      .then(result => {
+        if (result.success) {
+          console.log(result);
+          setStatus("IN_PROGRESS");
           setQuestionIdx(0);
         } else {
-          console.error(data.error);
+          console.error(result.error);
         }
       });
   }
@@ -70,7 +70,7 @@ export default function ShowQuiz() {
         <div className="card">
           <div className="card-header">Your quiz is ready</div>
           <div className="card-body">
-            <button className="btn btn-primary" onClick={startQuiz}>
+            <button className="btn btn-primary" onClick={handleStartQuiz}>
               Start Quiz
             </button>
           </div>

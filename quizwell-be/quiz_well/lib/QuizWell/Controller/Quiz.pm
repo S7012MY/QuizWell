@@ -273,4 +273,34 @@ sub status($self) {
   return $self->render(json => {status => $status});
 }
 
+sub list ($self) {
+  my @quizzes_rs = $self->db->resultset('Quiz')->search(
+    {},
+    {
+      prefetch => {
+        'quiz_questions' => {
+          'question' => {
+            'question_tags' => 'tag'
+          }
+        }
+      }
+    }
+  )->all;
+
+  my @quizzes = map {
+    my $quiz = $_;
+    my $uuid = $quiz->uuid;
+
+    my %seen_tags;
+    my @tags = grep { !$seen_tags{$_}++ } map {
+      my $question = $_->question;
+      map { $_->tag->name } $question->question_tags->all;
+    } $quiz->quiz_questions->all;
+
+    { uuid => $uuid, tags => \@tags }
+  } @quizzes_rs;
+
+  $self->render(json => { quizzes => \@quizzes });
+}
+
 1;
