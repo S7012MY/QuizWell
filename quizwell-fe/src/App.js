@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './App.css';
+import QuizzesList from './QuizzesList';
 
 // import bootstrap
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -42,6 +43,7 @@ function App() {
         </div>
         {!isGenerating && <button className="btn btn-primary" onClick={generateQuiz}>Generate</button>}
         {isGenerating && <div>Generating...</div>}
+        <QuizzesList />
       </main>
     </div>
   );
