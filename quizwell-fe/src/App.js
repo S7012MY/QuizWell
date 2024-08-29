@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import './App.css';
 import QuizzesList from './QuizzesList';
 
-// import bootstrap
 import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
 function App() {
   const navigate = useNavigate();

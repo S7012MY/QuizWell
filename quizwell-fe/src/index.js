@@ -5,10 +5,12 @@ import reportWebVitals from './reportWebVitals';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
 import App from './App';
+import LandingPage from './routes/LandingPage/LandingPage';
 import ShowQuiz from './routes/quiz/Show';
 
 const router = createBrowserRouter([
-  { path: '/', element: <App /> },
+  { path: '/', element: <LandingPage /> },
+  { path: '/app', element: <App /> },
   { path: '/quiz/:uuid', element: <ShowQuiz />},
   { path: '/test', element: <div>Test</div> },
 ]);
